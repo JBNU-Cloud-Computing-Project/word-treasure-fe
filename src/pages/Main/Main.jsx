@@ -47,12 +47,20 @@ const Main = () => {
         highestSimilarity: game.highestSimilarity
       }));
 
+      // 오늘 이미 플레이(정답을 맞춘) 했는지 여부 판단
+      // lastPlayDate는 LocalDate -> "YYYY-MM-DD" 형식의 문자열로 온다고 가정
+      const today = new Date().toISOString().slice(0, 10);
+      const hasPlayedToday = stats.lastPlayDate === today;
+
       setDashboardData({
         totalGames: stats.totalGames,
-        winRate: Math.round((stats.successRate || 0) * 100),
+        // 백엔드에서 이미 퍼센트 값(예: 75)이 내려온다고 가정하고, 추가 곱셈 없이 그대로 사용
+        winRate: Math.round(stats.successRate || 0),
         bestRank: stats.bestRank,
         currentStreak: stats.currentStreak,
-        recentGames
+        recentGames,
+        hasPlayedToday,
+        currentTokens: stats.currentTokens
       });
     } catch (error) {
       console.error('대시보드 데이터 로드 실패:', error);
@@ -69,7 +77,7 @@ const Main = () => {
 
   // 게임 시작 핸들러
   const handleStartGame = async () => {
-    if (isStarting) return;
+    if (isStarting || dashboardData?.hasPlayedToday) return;
     
     setIsStarting(true);
     try {
@@ -101,7 +109,7 @@ const Main = () => {
             <div className={styles.navRight}>
               <div className={styles.tokenDisplay}>
                 <span className={styles.tokenIcon}>🪙</span>
-                <span>{user?.tokens || 0} 토큰</span>
+                <span>{dashboardData?.currentTokens ?? (user?.tokens || 0)} 토큰</span>
               </div>
               <button onClick={handleLogout} className={styles.btnSecondary}>
                 로그아웃
@@ -120,12 +128,19 @@ const Main = () => {
           <p className={styles.heroSubtitle}>
             오늘의 단어를 추측하고 순위를 올려보세요
           </p>
+          {dashboardData?.hasPlayedToday && (
+            <p className={styles.heroSubtitle}>
+              오늘 정답을 이미 맞추셨어요 🎉 내일 다시 만나요~!
+            </p>
+          )}
           <button 
             onClick={handleStartGame}
             className={styles.btnPrimary}
-            disabled={isStarting}
+            disabled={isStarting || dashboardData?.hasPlayedToday}
           >
-            {isStarting ? '게임 준비 중...' : '게임 시작하기'}
+            {dashboardData?.hasPlayedToday
+              ? '내일 만나요~!'
+              : (isStarting ? '게임 준비 중...' : '게임 시작하기')}
           </button>
         </div>
       </section>

@@ -286,6 +286,36 @@
     line-height: 1.6;
 }
 
+.extraHint {
+    margin-top: 4px;
+    font-size: 0.9rem;
+    color: #7a6958;
+}
+
+.extraHintButton {
+    margin-top: 0.75rem;
+    padding: 0.5rem 0.9rem;
+    border-radius: 999px;
+    border: none;
+    background-color: #ffb347;
+    color: #2a1b10;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.extraHintButton:hover:not(:disabled) {
+    background-color: #ffa726;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 167, 38, 0.4);
+}
+
+.extraHintButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 /* 메타 정보 */
 .timelineMeta {
     font-size: 0.85rem;
@@ -349,6 +379,12 @@
     font-weight: 600;
 }
 
+/* 실시간 내 랭킹 - 상단 고정 강조 스타일 */
+.myLiveRank {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    margin-bottom: 0.5rem;
+}
+
 .rankingPosition {
     font-weight: 700;
     min-width: 35px;
@@ -404,6 +440,8 @@
     padding: 0.5rem 1rem;
     outline: none;
     background: transparent;
+    /* 입력 중인 텍스트가 잘 보이도록 진한 색상 지정 */
+    color: #1f1b2c;
 }
 
 .gameInput::placeholder {

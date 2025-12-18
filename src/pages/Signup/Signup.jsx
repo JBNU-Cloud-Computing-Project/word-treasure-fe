@@ -25,6 +25,10 @@ const Signup = () => {
   });
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
+  const [duplicateStatus, setDuplicateStatus] = useState({
+    nickname: null, // { isDuplicate, message }
+    email: null
+  });
   const [loading, setLoading] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
 
@@ -60,6 +64,10 @@ const Signup = () => {
     // 에러 메시지 초기화
     setError('');
     setFieldErrors(prev => ({ ...prev, [name]: '' }));
+    // 중복 상태 초기화
+    if (name === 'nickname' || name === 'email') {
+      setDuplicateStatus(prev => ({ ...prev, [name]: null }));
+    }
   };
 
   // 필드별 실시간 유효성 검사
@@ -75,6 +83,9 @@ const Signup = () => {
           error = '닉네임은 2자 이상이어야 합니다.';
         } else if (value.length > 10) {
           error = '닉네임은 10자 이하여야 합니다.';
+        } else {
+          // 닉네임 중복 확인
+          checkNicknameDuplicate(value);
         }
         break;
       
@@ -83,6 +94,9 @@ const Signup = () => {
           error = '이메일을 입력해주세요.';
         } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
           error = '올바른 이메일 형식이 아닙니다.';
+        } else {
+          // 이메일 중복 확인
+          checkEmailDuplicate(value);
         }
         break;
       
@@ -104,6 +118,44 @@ const Signup = () => {
     }
 
     setFieldErrors(prev => ({ ...prev, [name]: error }));
+  };
+
+  // 닉네임 중복 확인 (/api/auth/check/nickname?nickName=...)
+  const checkNicknameDuplicate = async (nickname) => {
+    try {
+      const res = await fetch(
+        `http://localhost:8080/api/auth/check/nickname?nickName=${encodeURIComponent(nickname)}`,
+        { credentials: 'include' }
+      );
+      const body = await res.json();
+      const data = body.data;
+
+      setDuplicateStatus(prev => ({
+        ...prev,
+        nickname: { isDuplicate: data.isDuplicate, message: data.message }
+      }));
+    } catch (err) {
+      console.error('닉네임 중복 확인 실패:', err);
+    }
+  };
+
+  // 이메일 중복 확인 (/api/auth/check/email?email=...)
+  const checkEmailDuplicate = async (email) => {
+    try {
+      const res = await fetch(
+        `http://localhost:8080/api/auth/check/email?email=${encodeURIComponent(email)}`,
+        { credentials: 'include' }
+      );
+      const body = await res.json();
+      const data = body.data;
+
+      setDuplicateStatus(prev => ({
+        ...prev,
+        email: { isDuplicate: data.isDuplicate, message: data.message }
+      }));
+    } catch (err) {
+      console.error('이메일 중복 확인 실패:', err);
+    }
   };
 
   // 폼 검증
@@ -237,6 +289,17 @@ const Signup = () => {
             {fieldErrors.nickname && (
               <div className={styles.fieldError}>{fieldErrors.nickname}</div>
             )}
+            {!fieldErrors.nickname && duplicateStatus.nickname && (
+              <div
+                className={
+                  duplicateStatus.nickname.isDuplicate
+                    ? styles.fieldError
+                    : styles.successMessage
+                }
+              >
+                {duplicateStatus.nickname.message}
+              </div>
+            )}
           </div>
           
           {/* 이메일 입력 */}
@@ -261,6 +324,17 @@ const Signup = () => {
             </div>
             {fieldErrors.email && (
               <div className={styles.fieldError}>{fieldErrors.email}</div>
+            )}
+            {!fieldErrors.email && duplicateStatus.email && (
+              <div
+                className={
+                  duplicateStatus.email.isDuplicate
+                    ? styles.fieldError
+                    : styles.successMessage
+                }
+              >
+                {duplicateStatus.email.message}
+              </div>
             )}
           </div>
           

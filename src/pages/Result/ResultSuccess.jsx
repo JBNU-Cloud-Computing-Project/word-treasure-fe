@@ -39,7 +39,7 @@ const ResultSuccess = () => {
   const handleCopyResult = async () => {
     const resultText = `WordTreasure 🎮
 오늘의 단어: ${resultData.answer || '단어'}
-시도: ${resultData.attempts || 0}번 | 순위: #${resultData.rank || '-'} | 최고 유사도: ${resultData.maxSimilarity || 0}%
+시도: ${resultData.attempts || 0}번 | 순위: #${resultData.rank || '-'}
 
 당신도 도전해보세요!`;
 
@@ -132,12 +132,6 @@ const ResultSuccess = () => {
                   #{resultData.rank || 24}
                 </div>
                 <div className={styles.resultStatLabel}>현재 순위</div>
-              </div>
-              <div className={styles.resultStat}>
-                <div className={styles.resultStatValue}>
-                  {resultData.maxSimilarity || 94}%
-                </div>
-                <div className={styles.resultStatLabel}>최고 유사도</div>
               </div>
             </div>
 

@@ -22,14 +22,18 @@ const Game = () => {
   
   //초기화 진행 중인지 추적 (useRef 사용)
   const initializingRef = useRef(false);
+  // 실시간 순위 요청 중인지 추적 (동시 요청 방지)
+  const fetchingRankingsRef = useRef(false);
   
   // 게임 상태
   const [gameData, setGameData] = useState(null);
   const [userInput, setUserInput] = useState('');
   const [attempts, setAttempts] = useState([]);
   const [rankings, setRankings] = useState([]);
+  const [myLiveRank, setMyLiveRank] = useState(null);
   const [loading, setLoading] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [hintLoading, setHintLoading] = useState(false);
 
   useEffect(() => {
     //이미 초기화 중이면 무시
@@ -74,9 +78,48 @@ const Game = () => {
     setShowScrollTop(window.pageYOffset > 300);
   };
 
+  // 추가 힌트 요청
+  const handleRequestHint = async () => {
+    if (!gameData?.gameSessionId || hintLoading) return;
+
+    setHintLoading(true);
+    try {
+      const response = await api.post('/api/game/hint', {
+        gameSessionId: gameData.gameSessionId,
+      });
+
+      const { hintText, remainingTokens, tokensSpent } = response.data.data;
+
+      // 가장 최신 시도(attempts[0])에 extraHints를 추가
+      setAttempts(prev => {
+        if (!prev.length) return prev;
+
+        const [latest, ...rest] = prev;
+        const updatedLatest = {
+          ...latest,
+          extraHints: [...(latest.extraHints || []), hintText],
+        };
+
+        return [updatedLatest, ...rest];
+      });
+
+      // 필요하다면 토큰 정보로 별도 UI를 만들 수 있음
+      console.log('추가 힌트 요청 - 사용 토큰:', tokensSpent, '남은 토큰:', remainingTokens);
+    } catch (error) {
+      console.error('추가 힌트 요청 실패:', error);
+      alert(error.response?.data?.message || '추가 힌트를 불러오지 못했습니다.');
+    } finally {
+      setHintLoading(false);
+    }
+  };
+
   // 특정 단어에 대한 실시간 순위 가져오기
   const fetchRankings = async (dailyWordId) => {
     if (!dailyWordId) return;
+    // 이미 순위 요청 중이면 중복 호출 방지
+    if (fetchingRankingsRef.current) return;
+
+    fetchingRankingsRef.current = true;
     try {
       const response = await api.get('/api/game/rankings/live', {
         params: {
@@ -86,19 +129,22 @@ const Game = () => {
       });
       const data = response.data.data;
       setRankings(data?.rankings || []);
+      setMyLiveRank(data?.myRank || null);
     } catch (error) {
       console.error('순위 로드 실패:', error);
+    } finally {
+      fetchingRankingsRef.current = false;
     }
   };
 
-  // gameData가 준비된 후 10초마다 순위 갱신
+  // gameData가 준비된 후 5초마다 순위 갱신
   useEffect(() => {
     if (!gameData?.dailyWordId) return;
 
     fetchRankings(gameData.dailyWordId);
     const rankingInterval = setInterval(
       () => fetchRankings(gameData.dailyWordId),
-      10000
+      5000
     );
 
     return () => clearInterval(rankingInterval);
@@ -128,12 +174,20 @@ const Game = () => {
       
       // 입력창 초기화
       setUserInput('');
+
+      // 시도 제출 후에도 실시간 순위 즉시 갱신
+      if (gameData?.dailyWordId) {
+        fetchRankings(gameData.dailyWordId);
+      }
       
       // 정답이면 성공 페이지로
       if (result.isCorrect) {
         setTimeout(() => {
+          console.log(attempts);
           navigate('/result/success', { 
             state: { 
+              answer: attempts.userInput,
+              attemptHistory: attempts,
               attempts: attempts.length + 1,
               rank: result.rank,
               tokens: result.tokensEarned 
@@ -249,14 +303,35 @@ const Game = () => {
                       </div>
                     </div>
 
-                    {/* AI 힌트 */}
+                    {/* AI 힌트 + 추가 힌트 */}
                     {attempt.hint && (
                       <div className={styles.timelineHint}>
                         <div className={styles.hintHeader}>
                           <span className={styles.hintIcon}>💡</span>
                           <strong>AI 힌트</strong>
                         </div>
+
+                        {/* 기본 힌트 */}
                         <p>{attempt.hint}</p>
+
+                        {/* 추가 힌트 목록 */}
+                        {attempt.extraHints?.map((extraHint, i) => (
+                          <p key={i} className={styles.extraHint}>
+                            + {extraHint}
+                          </p>
+                        ))}
+
+                        {/* 가장 최신 시도에만 추가 힌트 버튼 노출 */}
+                        {index === 0 && (
+                          <button
+                            type="button"
+                            className={styles.extraHintButton}
+                            onClick={handleRequestHint}
+                            disabled={hintLoading}
+                          >
+                            {hintLoading ? '힌트 불러오는 중...' : '추가 힌트 받기 (2 토큰 소모)'}
+                          </button>
+                        )}
                       </div>
                     )}
 
@@ -278,6 +353,21 @@ const Game = () => {
                 실시간 순위
               </h3>
               
+              {/* 나의 실시간 랭킹 - 맨 위 고정 */}
+              {myLiveRank && (
+                <div className={`${styles.rankingItem} ${styles.myRank} ${styles.myLiveRank}`}>
+                  <span className={styles.rankingPosition}>
+                    {myLiveRank.rank ? `#${myLiveRank.rank}` : '-'}
+                  </span>
+                  <span className={styles.rankingName}>
+                    {myLiveRank.nickname || user?.nickname || '나'} (나)
+                  </span>
+                  <span className={styles.rankingTime}>
+                    {myLiveRank.status || '진행중'}
+                  </span>
+                </div>
+              )}
+
               {rankings.slice(0, 5).map((player, index) => (
                 <div 
                   key={index}
@@ -293,23 +383,12 @@ const Game = () => {
                     {player.memberId === user?.memberId && ' (나)'}
                   </span>
                   <span className={styles.rankingTime}>
-                    {player.attempts}번 시도
+                    {player.attemptCount != null
+                      ? `${player.attemptCount}번 시도`
+                      : '시도 정보 없음'}
                   </span>
                 </div>
               ))}
-              
-              {/* 내 순위가 5위 밖이면 따로 표시 */}
-              {rankings.findIndex(p => p.memberId === user?.memberId) > 4 && (
-                <div className={`${styles.rankingItem} ${styles.myRank}`}>
-                  <span className={styles.rankingPosition}>
-                    #{rankings.findIndex(p => p.memberId === user?.memberId) + 1}
-                  </span>
-                  <span className={styles.rankingName}>
-                    {user?.nickname} (나)
-                  </span>
-                  <span className={styles.rankingTime}>진행중</span>
-                </div>
-              )}
             </div>
           </aside>
         </div>

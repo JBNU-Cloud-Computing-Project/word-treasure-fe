@@ -20,8 +20,10 @@ const Leaderboard = () => {
   
   const [period, setPeriod] = useState('today'); // today, week, month, all
   const [rankings, setRankings] = useState([]);
+  const [myRanking, setMyRanking] = useState(null);
   const [wordInfo, setWordInfo] = useState(null);
   const [statistics, setStatistics] = useState(null);
+  const [memberStats, setMemberStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -33,6 +35,7 @@ const Leaderboard = () => {
   useEffect(() => {
     fetchWordInfo();
     fetchStatistics();
+    fetchMemberStats();
   }, []);
 
   // 리더보드 데이터 가져오기
@@ -89,6 +92,7 @@ const Leaderboard = () => {
 
       const data = response.data.data;
       setRankings(data.rankings || []);
+      setMyRanking(data.myRanking || null);
       // LeaderboardResponse.pagination.totalPages 를 우선 사용
       setTotalPages(data.pagination?.totalPages || data.totalPages || 1);
     } catch (error) {
@@ -116,6 +120,16 @@ const Leaderboard = () => {
       setStatistics(response.data.data);
     } catch (error) {
       console.error('통계 로드 실패:', error);
+    }
+  };
+
+  // 회원 통계(토큰 포함) 가져오기 (/api/member/statistics)
+  const fetchMemberStats = async () => {
+    try {
+      const response = await api.get('/api/member/statistics');
+      setMemberStats(response.data.data);
+    } catch (error) {
+      console.error('회원 통계 로드 실패:', error);
     }
   };
 
@@ -205,7 +219,7 @@ const Leaderboard = () => {
             <div className={styles.navRight}>
               <div className={styles.tokenDisplay}>
                 <span className={styles.tokenIcon}>🪙</span>
-                <span>{user?.tokens || 0} 토큰</span>
+                <span>{memberStats?.currentTokens ?? (user?.tokens || 0)} 토큰</span>
               </div>
               <button onClick={handleLogout} className={styles.btnSecondary}>
                 로그아웃
@@ -266,56 +280,171 @@ const Leaderboard = () => {
               </div>
             ) : (
               <>
-                {rankings.map((player) => (
-                  <div
-                    key={player.memberId}
-                    className={`${styles.extendedLeaderboardItem} ${
-                      player.memberId === user?.memberId ? styles.currentUser : ''
-                    }`}
-                  >
-                    {/* 순위 */}
-                    <div className={`${styles.rank} ${styles[`rank${player.rank}`]}`}>
-                      #{player.rank}
-                    </div>
-
-                    {/* 유저 정보 */}
-                    <div className={styles.userInfo}>
-                      <div
-                        className={styles.userAvatar}
-                        style={{ backgroundColor: getAvatarColor(player.nickname) }}
-                      >
-                        {getAvatar(player.nickname)}
+                {/* 순위 리스트: 스크롤 영역 */}
+                <div className={styles.leaderboardList}>
+                  {rankings.map((player) => (
+                    <div
+                      key={player.memberId}
+                      className={`${styles.extendedLeaderboardItem} ${
+                        player.memberId === user?.memberId ? styles.currentUser : ''
+                      }`}
+                    >
+                      {/* 순위 */}
+                      <div className={`${styles.rank} ${styles[`rank${player.rank}`]}`}>
+                        #{player.rank}
                       </div>
-                      <div>
-                        <div className={styles.playerName}>
-                          {player.nickname}
-                          {player.memberId === user?.memberId && ' (나)'}
+
+                      {/* 유저 정보 */}
+                      <div className={styles.userInfo}>
+                        <div
+                          className={styles.userAvatar}
+                          style={{ backgroundColor: getAvatarColor(player.nickname) }}
+                        >
+                          {getAvatar(player.nickname)}
                         </div>
+                        <div>
+                          <div className={styles.playerName}>
+                            {player.nickname}
+                            {player.memberId === user?.memberId && ' (나)'}
+                          </div>
                         <div className={styles.playerScore}>
-                          {player.description || `${player.attempts}번 만에 성공`}
+                          {player.description ??
+                            (player.attemptCount != null
+                              ? (player.tokensEarned != null && player.tokensEarned > 0
+                                  ? `${player.attemptCount}번 만에 성공`
+                                  : `${player.attemptCount}번 진행중`)
+                              : '기록 없음')}
+                        </div>
                         </div>
                       </div>
-                    </div>
 
-                    {/* 소요 시간 */}
-                    <div className={styles.statValue}>
-                      <div>{player.completionTime || '-'}</div>
-                      <div className={styles.statLabel}>소요 시간</div>
-                    </div>
+                      {/* 소요 시간 */}
+                      <div className={styles.statValue}>
+                        <div>{player.completionTime || '-'}</div>
+                        <div className={styles.statLabel}>소요 시간</div>
+                      </div>
 
-                    {/* 최종 점수 */}
-                    <div className={styles.statValue}>
-                      <div>{player.finalScore || '100'}%</div>
-                      <div className={styles.statLabel}>최종 점수</div>
-                    </div>
+                      {/* 최종/현재 점수 */}
+                      <div className={styles.statValue}>
+                        <div>
+                          {period === 'today'
+                            ? player.tokensEarned != null &&
+                              player.tokensEarned > 0 &&
+                              player.finalScore != null
+                              ? `${player.finalScore.toFixed(0)}%`
+                              : '-'
+                            : player.finalScore != null
+                            ? `${player.finalScore.toFixed(0)}%`
+                            : '-'}
+                        </div>
+                        <div className={styles.statLabel}>
+                          {period === 'today'
+                            ? player.tokensEarned != null && player.tokensEarned > 0
+                              ? '최종 점수'
+                              : '현재 점수'
+                            : '최종 점수'}
+                        </div>
+                      </div>
 
-                    {/* 획득 토큰 */}
-                    <div className={styles.statValue}>
-                      <div>+{player.tokensEarned || 0}</div>
-                      <div className={styles.statLabel}>획득 토큰</div>
+                      {/* 획득 토큰 */}
+                      <div className={styles.statValue}>
+                        <div>+{player.tokensEarned || 0}</div>
+                        <div className={styles.statLabel}>획득 토큰</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* 나의 랭킹 - 오늘의 순위 박스 하단에 별도 섹션으로 고정 */}
+                {myRanking && (
+                  <div className={styles.myRankingSection}>
+                    <h3 className={styles.myRankingTitle}>나의 랭킹</h3>
+                    <div
+                      className={`${styles.extendedLeaderboardItem} ${styles.myRankingItem}`}
+                    >
+                      {/* 순위 */}
+                      <div className={styles.rank}>
+                        {myRanking.rank ? `#${myRanking.rank}` : '-'}
+                      </div>
+
+                      {/* 유저 정보 */}
+                      <div className={styles.userInfo}>
+                        <div
+                          className={styles.userAvatar}
+                          style={{
+                            backgroundColor: getAvatarColor(
+                              myRanking.nickname || user?.nickname || '나'
+                            )
+                          }}
+                        >
+                          {getAvatar(myRanking.nickname || user?.nickname || '나')}
+                        </div>
+                        <div>
+                          <div className={styles.playerName}>
+                            {myRanking.nickname || user?.nickname || '나'} (나)
+                          </div>
+                        <div className={styles.playerScore}>
+                          {period === 'today'
+                            ? myRanking.attemptCount != null
+                              ? (myRanking.tokensEarned != null && myRanking.tokensEarned > 0
+                                  ? `${myRanking.attemptCount}번 만에 성공`
+                                  : `${myRanking.attemptCount}번 진행중`)
+                              : '기록 없음'
+                            : myRanking.totalGames != null
+                            ? `총 ${myRanking.totalGames}게임, ${
+                                myRanking.successfulGames ?? 0
+                              }게임 성공`
+                            : '기록 없음'}
+                        </div>
+                        </div>
+                      </div>
+
+                      {/* 소요/평균 시간 */}
+                      <div className={styles.statValue}>
+                        <div>
+                          {period === 'today'
+                            ? myRanking.completionTime || '-'
+                            : myRanking.averageCompletionTime || '-'}
+                        </div>
+                        <div className={styles.statLabel}>
+                          {period === 'today' ? '소요 시간' : '평균 시간'}
+                        </div>
+                      </div>
+
+                      {/* 최종/평균/현재 점수 */}
+                      <div className={styles.statValue}>
+                        <div>
+                          {period === 'today'
+                            ? myRanking.tokensEarned != null &&
+                              myRanking.tokensEarned > 0 &&
+                              myRanking.finalScore != null
+                              ? `${myRanking.finalScore.toFixed(0)}%`
+                              : '-'
+                            : myRanking.averageScore != null
+                            ? `${myRanking.averageScore.toFixed(0)}점`
+                            : '-'}
+                        </div>
+                        <div className={styles.statLabel}>
+                          {period === 'today'
+                            ? myRanking.tokensEarned != null && myRanking.tokensEarned > 0
+                              ? '최종 점수'
+                              : '현재 점수'
+                            : '평균 점수'}
+                        </div>
+                      </div>
+
+                      {/* 획득 토큰 */}
+                      <div className={styles.statValue}>
+                        <div>
+                          {myRanking.tokensEarned != null
+                            ? `+${myRanking.tokensEarned}`
+                            : '+0'}
+                        </div>
+                        <div className={styles.statLabel}>획득 토큰</div>
+                      </div>
                     </div>
                   </div>
-                ))}
+                )}
 
                 {/* 페이지네이션 */}
                 {totalPages > 1 && (
@@ -404,19 +533,19 @@ const Leaderboard = () => {
                   <div className={styles.difficultyStatRow}>
                     <span>쉬움</span>
                     <span style={{ color: 'var(--success-color)' }}>
-                      {((statistics.easy?.successRate || 0) * 100).toFixed(0)}% 성공률
+                      {(statistics.easy?.successRate ?? 0).toFixed(0)}% 성공률
                     </span>
                   </div>
                   <div className={styles.difficultyStatRow}>
                     <span>중급</span>
                     <span style={{ color: 'var(--warning-color)' }}>
-                      {((statistics.medium?.successRate || 0) * 100).toFixed(0)}% 성공률
+                      {(statistics.medium?.successRate ?? 0).toFixed(0)}% 성공률
                     </span>
                   </div>
                   <div className={styles.difficultyStatRow}>
                     <span>어려움</span>
                     <span style={{ color: 'var(--danger-color)' }}>
-                      {((statistics.hard?.successRate || 0) * 100).toFixed(0)}% 성공률
+                      {(statistics.hard?.successRate ?? 0).toFixed(0)}% 성공률
                     </span>
                   </div>
                 </div>

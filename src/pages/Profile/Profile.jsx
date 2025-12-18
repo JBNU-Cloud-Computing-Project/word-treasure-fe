@@ -22,6 +22,7 @@ const Profile = () => {
   const [profileData, setProfileData] = useState(null);
   const [statistics, setStatistics] = useState(null);
   const [activityData, setActivityData] = useState([]);
+  const [bestRecords, setBestRecords] = useState(null);
   const [loading, setLoading] = useState(true);
   
   // 모달 상태
@@ -46,6 +47,7 @@ const Profile = () => {
     fetchProfileData();
     fetchStatistics();
     fetchActivityData();
+    fetchBestRecords();
   }, []);
 
   // 프로필 데이터 가져오기 (/api/member/profile)
@@ -75,11 +77,12 @@ const Profile = () => {
       setStatistics({
         totalGames: data.totalGames,
         successCount: data.successfulGames,
-        // successRate: 0.60 형태이므로 %로 변환
-        successRate: Math.round((data.successRate || 0) * 100),
+        // successRate는 백엔드에서 퍼센트 값(예: 75)이 내려온다고 가정하고 그대로 사용
+        successRate: Math.round(data.successRate || 0),
         avgAttempts: data.averageAttempts,
         bestRank: data.bestRank,
-        maxStreak: data.longestStreak
+        maxStreak: data.longestStreak,
+        currentTokens: data.currentTokens
       });
     } catch (error) {
       console.error('통계 로드 실패:', error);
@@ -88,24 +91,57 @@ const Profile = () => {
     }
   };
 
+  // 최고 기록 데이터 가져오기 (/api/member/best-records)
+  const fetchBestRecords = async () => {
+    try {
+      const response = await api.get('/api/member/best-records');
+      setBestRecords(response.data.data || null);
+    } catch (error) {
+      console.error('최고 기록 로드 실패:', error);
+    }
+  };
+
   // 활동 캘린더 데이터 가져오기 (/api/member/activity-calendar)
   const fetchActivityData = async () => {
     try {
-      // 최근 42일(6주) 기준
-      const end = new Date();
-      const start = new Date();
-      start.setDate(end.getDate() - 41);
+      // 현재 달 기준: 1일부터 35일(5주) 범위
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1); // 이번 달 1일
+      const end = new Date(monthStart);
+      end.setDate(monthStart.getDate() + 34); // 35일 범위 (예: 12/1~1/4)
 
       const toDateStr = (d) => d.toISOString().slice(0, 10); // YYYY-MM-DD
 
       const response = await api.get('/api/member/activity-calendar', {
         params: {
-          startDate: toDateStr(start),
+          startDate: toDateStr(monthStart),
           endDate: toDateStr(end)
         }
       });
 
-      setActivityData(response.data.data?.activities || []);
+      const apiActivities = response.data.data?.activities || [];
+      const activityMap = new Map(
+        apiActivities.map((item) => [item.activityDate, item])
+      );
+
+      // 35일 범위에 대해 날짜/레벨 매핑 (없는 날은 레벨 0)
+      const days = [];
+      for (
+        let d = new Date(monthStart);
+        d <= end;
+        d.setDate(d.getDate() + 1)
+      ) {
+        const current = new Date(d); // 루프 내에서 복사
+        const dateStr = toDateStr(current);
+        const activity = activityMap.get(dateStr);
+
+        days.push({
+          date: dateStr,
+          participationLevel: activity?.participationLevel ?? 0
+        });
+      }
+
+      setActivityData(days);
     } catch (error) {
       console.error('활동 데이터 로드 실패:', error);
     }
@@ -173,12 +209,12 @@ const Profile = () => {
   };
 
   // 활동 레벨 (0-4)
-  const getActivityLevel = (count) => {
-    if (count === 0) return 0;
-    if (count <= 2) return 1;
-    if (count <= 4) return 2;
-    if (count <= 6) return 3;
-    return 4;
+  const getActivityLevel = (level) => {
+    if (level == null) return 0;
+    // 서버에서 participationLevel이 0~4로 온다고 가정하고, 범위만 한 번 더 안전하게 보정
+    if (level <= 0) return 0;
+    if (level >= 4) return 4;
+    return level;
   };
 
   // 가입일 포맷
@@ -212,7 +248,7 @@ const Profile = () => {
             <div className={styles.navRight}>
               <div className={styles.tokenDisplay}>
                 <span className={styles.tokenIcon}>🪙</span>
-                <span>{user?.tokens || 0} 토큰</span>
+                <span>{statistics?.currentTokens ?? (user?.tokens || 0)} 토큰</span>
               </div>
               <button onClick={handleLogout} className={styles.btnSecondary}>
                 로그아웃
@@ -238,8 +274,8 @@ const Profile = () => {
               
               <div className={styles.profileMeta}>
                 <span>📧 {user?.email}</span>
-                <span>📅 가입일: {formatJoinDate(profileData?.joinedAt)}</span>
-                <span>🪙 보유 토큰: {user?.tokens || 0}</span>
+                <span>📅 가입일: {formatJoinDate(profileData?.createdAt)}</span>
+                <span>🪙 보유 토큰: {profileData?.currentTokens ?? user?.tokens ?? 0}</span>
               </div>
               
               {/* 액션 버튼 */}
@@ -275,21 +311,31 @@ const Profile = () => {
                   <div
                     key={index}
                     className={`${styles.calendarDay} ${
-                      styles[`active${getActivityLevel(day.count)}`]
+                      styles[`active${getActivityLevel(day.participationLevel)}`]
                     }`}
-                    title={`${day.date}: ${day.count}회`}
-                  />
+                    title={`${day.date}: 참여 레벨 ${day.participationLevel}`}
+                  >
+                    {new Date(day.date).getDate()}
+                  </div>
                 ))
               ) : (
-                // 더미 데이터 (42일 = 6주)
-                [...Array(42)].map((_, index) => (
-                  <div
-                    key={index}
-                    className={`${styles.calendarDay} ${
-                      styles[`active${Math.floor(Math.random() * 5)}`]
-                    }`}
-                  />
-                ))
+                // 더미 데이터 (현재 달 1일부터 35일 표시)
+                (() => {
+                  const now = new Date();
+                  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+                  return [...Array(35)].map((_, index) => {
+                    const d = new Date(monthStart);
+                    d.setDate(monthStart.getDate() + index);
+                    return (
+                      <div
+                        key={index}
+                        className={`${styles.calendarDay} ${styles.active0}`}
+                      >
+                        {d.getDate()}
+                      </div>
+                    );
+                  });
+                })()
               )}
             </div>
           </div>
@@ -336,21 +382,21 @@ const Profile = () => {
                 <div className={styles.recordIcon}>🥇</div>
                 <div className={styles.recordLabel}>최고 순위</div>
                 <div className={styles.recordValue}>
-                  #{statistics?.bestRank || '-'}
+                  #{bestRecords?.bestRank?.rank ?? '-'}
                 </div>
               </div>
               <div className={styles.recordItem}>
                 <div className={styles.recordIcon}>⚡</div>
                 <div className={styles.recordLabel}>최소 시도</div>
                 <div className={styles.recordValue}>
-                  {statistics?.minAttempts || '-'}번
+                  {bestRecords?.fastestSolve?.attemptCount ?? '-'}번
                 </div>
               </div>
               <div className={styles.recordItem}>
                 <div className={styles.recordIcon}>🔥</div>
                 <div className={styles.recordLabel}>최장 연속</div>
                 <div className={styles.recordValue}>
-                  {statistics?.maxStreak || '-'}일
+                  {bestRecords?.longestStreak?.streakDays ?? '-'}일
                 </div>
               </div>
             </div>
