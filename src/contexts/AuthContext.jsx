@@ -33,8 +33,6 @@ export const AuthProvider = ({ children }) => {
     
     checkingRef.current = true;
     try {
-      // TODO: 실제 API 엔드포인트로 변경 필요
-      // 서버에서 /api/auth/me 같은 엔드포인트 필요
       const response = await api.get('/api/auth/me');
       setUser(response.data.data);
     } catch (error) {

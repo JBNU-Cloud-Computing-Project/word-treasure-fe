@@ -59,7 +59,59 @@ const Game = () => {
       const current = currentRes.data.data;
 
       if (current?.hasStarted && current?.gameSessionId) {
+        // 진행 중인 게임 세션이 있는 경우: 서버에서 내려준 진행 상태(progress)로 복원
         setGameData(current);
+
+        const progress = current.progress;
+
+        if (progress) {
+          // 1) 시도 기록 복원 (최신 시도가 배열의 앞에 오도록 정렬)
+          const restoredAttempts =
+            (progress.attempts || [])
+              .slice()
+              .sort((a, b) => (b.attemptNumber ?? 0) - (a.attemptNumber ?? 0))
+              .map((attempt) => ({
+                ...attempt,
+                // 백엔드 similarityScore(0~100)를 프론트에서 쓰는 similarity 필드로 매핑
+                similarity: Math.round(
+                  attempt.similarityScore ?? attempt.similarity ?? 0
+                ),
+                // extraHints는 나중에 progress.hints로 채울 것
+                extraHints: [],
+                // createdAt을 간단한 표시용 문자열로 변환 (없으면 '방금 전')
+                timestamp: attempt.createdAt || '방금 전',
+              }));
+
+          // 2) 추가 힌트(progress.hints)를 가장 최근 시도에 붙이기
+          const restoredHints = progress.hints || [];
+          if (restoredAttempts.length > 0 && restoredHints.length > 0) {
+            // 요청 시간 기준으로 정렬 후, 내용만 뽑아서 최신 시도에 붙임
+            const sortedHints = restoredHints
+              .slice()
+              .sort(
+                (a, b) =>
+                  new Date(a.requestedAt).getTime() -
+                  new Date(b.requestedAt).getTime()
+              );
+
+            const extraHintTexts = sortedHints.map(
+              (hint) => hint.hintContent
+            );
+
+            restoredAttempts[0] = {
+              ...restoredAttempts[0],
+              extraHints: [
+                ...(restoredAttempts[0].extraHints || []),
+                ...extraHintTexts,
+              ],
+            };
+          }
+
+          setAttempts(restoredAttempts);
+        } else {
+          // progress가 없으면 시도 기록은 빈 배열로 초기화
+          setAttempts([]);
+        }
       } else {
         const startRes = await api.post('/api/game/start', {
           dailyWordId: current.dailyWordId

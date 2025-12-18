@@ -282,9 +282,9 @@ const Leaderboard = () => {
               <>
                 {/* 순위 리스트: 스크롤 영역 */}
                 <div className={styles.leaderboardList}>
-                  {rankings.map((player) => (
+                  {rankings.map((player, index) => (
                     <div
-                      key={player.memberId}
+                      key={`${player.rank}-${player.nickname}-${index}`}
                       className={`${styles.extendedLeaderboardItem} ${
                         player.memberId === user?.memberId ? styles.currentUser : ''
                       }`}
