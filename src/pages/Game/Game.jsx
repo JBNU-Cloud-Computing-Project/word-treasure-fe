@@ -381,7 +381,7 @@ const Game = () => {
                             onClick={handleRequestHint}
                             disabled={hintLoading}
                           >
-                            {hintLoading ? '힌트 불러오는 중...' : '추가 힌트 받기 (2 토큰 소모)'}
+                            {hintLoading ? '힌트 불러오는 중...' : '추가 힌트 받기 (5 토큰 소모)'}
                           </button>
                         )}
                       </div>

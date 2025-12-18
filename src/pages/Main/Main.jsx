@@ -18,11 +18,13 @@ const Main = () => {
   const { user, logout } = useAuth();
   
   const [dashboardData, setDashboardData] = useState(null);
+  const [tokenPoolData, setTokenPoolData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isStarting, setIsStarting] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
+    fetchTokenPoolData();
   }, []);
 
   // 대시보드 데이터 가져오기
@@ -47,14 +49,11 @@ const Main = () => {
         highestSimilarity: game.highestSimilarity
       }));
 
-      // 오늘 이미 플레이(정답을 맞춘) 했는지 여부 판단
-      // lastPlayDate는 LocalDate -> "YYYY-MM-DD" 형식의 문자열로 온다고 가정
-      const today = new Date().toISOString().slice(0, 10);
-      const hasPlayedToday = stats.lastPlayDate === today;
+      // 가장 최근 게임이 성공했는지 확인
+      const hasPlayedToday = recentGames.length > 0 && recentGames[0].isSuccess;
 
       setDashboardData({
         totalGames: stats.totalGames,
-        // 백엔드에서 이미 퍼센트 값(예: 75)이 내려온다고 가정하고, 추가 곱셈 없이 그대로 사용
         winRate: Math.round(stats.successRate || 0),
         bestRank: stats.bestRank,
         currentStreak: stats.currentStreak,
@@ -66,6 +65,16 @@ const Main = () => {
       console.error('대시보드 데이터 로드 실패:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // 토큰 풀 데이터 가져오기
+  const fetchTokenPoolData = async () => {
+    try {
+      const res = await api.get('/api/token-pool/today');
+      setTokenPoolData(res.data.data);
+    } catch (error) {
+      console.error('토큰 풀 데이터 로드 실패:', error);
     }
   };
 
@@ -128,6 +137,31 @@ const Main = () => {
           <p className={styles.heroSubtitle}>
             오늘의 단어를 추측하고 순위를 올려보세요
           </p>
+          {tokenPoolData && (
+            <div className={styles.tokenPoolInfo}>
+              <div className={styles.tokenPoolTitle}>💰 오늘의 토큰 풀</div>
+              <div className={styles.tokenPoolAmount}>
+                {tokenPoolData.totalPool?.toLocaleString() || 0} 토큰
+              </div>
+              <p className={styles.tokenPoolDescription}>
+                {tokenPoolData.totalPool > 0 
+                  ? (
+                    <>
+                      오늘 정답을 맞추면 이 토큰을 획득할 수 있어요!
+                      <br />
+                      다음 게임 시작 전에 순위별로 배분됩니다.
+                    </>
+                  )
+                  : (
+                    <>
+                      아직 토큰이 모이지 않았어요. 게임에 참여하고 순위를 올려보세요!
+                      <br />
+                      다음 게임 시작 전에 순위별로 배분됩니다.
+                    </>
+                  )}
+              </p>
+            </div>
+          )}
           {dashboardData?.hasPlayedToday && (
             <p className={styles.heroSubtitle}>
               오늘 정답을 이미 맞추셨어요 🎉 내일 다시 만나요~!
