@@ -1,0 +1,33 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap');
+
+/* Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary-color: #2D2A5C;
+    --secondary-color: #FF8A47;
+    --accent-color: #3EC7C2;
+    --success-color: #4AD98F;
+    --warning-color: #FFC857;
+    --danger-color: #EC4C64;
+    --dark-color: #1F1B2C;
+    --light-color: #F7F4EF;
+    --muted-color: #8E8A9C;
+    --gray-color: #B3AFC2;
+    --border-radius: 18px;
+    --transition: all 0.25s ease;
+    --card-glow: 0 18px 40px rgba(32, 27, 47, 0.12);
+}
+
+body {
+    font-family: 'Space Grotesk', 'Noto Sans KR', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background-color: var(--light-color);
+    color: var(--dark-color);
+    line-height: 1.6;
+    min-height: 100vh;
+    letter-spacing: -0.02em;
+}

@@ -1,0 +1,419 @@
+/* 전체 래퍼 */
+.wrapper {
+    background-color: #f9f5f0;
+    min-height: 100vh;
+}
+
+/* Header */
+.header {
+    background-color: rgba(247, 244, 239, 0.85);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 15px 30px rgba(49, 45, 68, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.nav {
+    padding: 1rem 0;
+}
+
+.nav .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    font-size: 1.6rem;
+    font-weight: bold;
+    color: var(--primary-color);
+    text-decoration: none;
+    letter-spacing: -0.03em;
+}
+
+.navLinks {
+    display: flex;
+    gap: 2rem;
+    list-style: none;
+}
+
+.navLink {
+    color: var(--muted-color);
+    text-decoration: none;
+    transition: var(--transition);
+    font-weight: 500;
+}
+
+.navLink:hover {
+    color: var(--secondary-color);
+}
+
+.navRight {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.tokenDisplay {
+    display: inline-flex;
+    align-items: center;
+    background-color: rgba(45, 42, 92, 0.08);
+    color: var(--dark-color);
+    border: 1px solid rgba(45, 42, 92, 0.12);
+    padding: 0.65rem 1.6rem;
+    border-radius: 40px;
+    font-size: 1.05rem;
+    letter-spacing: -0.02em;
+}
+
+.tokenIcon {
+    font-size: 1.4rem;
+    margin-right: 0.4rem;
+}
+
+.btnSecondary {
+    padding: 0.75rem 1.5rem;
+    background-color: rgba(45, 42, 92, 0.05);
+    color: var(--dark-color);
+    border: 2px solid rgba(45, 42, 92, 0.15);
+    border-radius: 999px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btnSecondary:hover {
+    background-color: var(--secondary-color);
+    color: white;
+    border-color: transparent;
+    transform: translateY(-2px);
+}
+
+/* Container */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 20px;
+}
+
+/* 필터 섹션 */
+.leaderboardFilters {
+    background-color: white;
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.filterTabs {
+    display: flex;
+    gap: 1rem;
+    border-bottom: 2px solid #E0E0E0;
+}
+
+.filterTab {
+    padding: 0.75rem 1.5rem;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: var(--gray-color);
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    margin-bottom: -2px;
+}
+
+.filterTab:hover {
+    color: var(--primary-color);
+}
+
+.filterTab.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+}
+
+/* 메인 레이아웃 */
+.leaderboardMain {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 2rem;
+}
+
+/* 리더보드 */
+.leaderboard {
+    background-color: white;
+    border-radius: var(--border-radius);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.leaderboardHeader {
+    background: linear-gradient(120deg, var(--primary-color), #423b89);
+    color: white;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.leaderboardHeader h2 {
+    font-size: 1.8rem;
+    margin-bottom: 0.5rem;
+}
+
+.leaderboardHeader p {
+    opacity: 0.9;
+}
+
+.loading {
+    text-align: center;
+    padding: 3rem;
+    color: var(--gray-color);
+}
+
+.emptyState {
+    text-align: center;
+    padding: 4rem 2rem;
+}
+
+.emptyIcon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.emptyState h3 {
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+}
+
+.emptyState p {
+    color: var(--gray-color);
+}
+
+/* 확장된 리더보드 아이템 */
+.extendedLeaderboardItem {
+    display: grid;
+    grid-template-columns: 60px 1fr 100px 100px 100px;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.2rem;
+    border-bottom: 1px solid #E0E0E0;
+    transition: var(--transition);
+}
+
+.extendedLeaderboardItem:hover {
+    background-color: #F8F9FA;
+}
+
+.extendedLeaderboardItem:last-child {
+    border-bottom: none;
+}
+
+.extendedLeaderboardItem.currentUser {
+    background-color: #E3F2FD;
+    font-weight: 600;
+}
+
+.rank {
+    font-size: 1.5rem;
+    font-weight: bold;
+    text-align: center;
+    color: var(--gray-color);
+}
+
+.rank.rank1 { color: #FFD700; }
+.rank.rank2 { color: #C0C0C0; }
+.rank.rank3 { color: #CD7F32; }
+
+/* 유저 정보 */
+.userInfo {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.userAvatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+.playerName {
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+}
+
+.playerScore {
+    font-size: 0.85rem;
+    color: var(--gray-color);
+}
+
+/* 통계 값 */
+.statValue {
+    text-align: center;
+    font-weight: 500;
+}
+
+.statValue > div:first-child {
+    font-size: 1rem;
+    color: #111;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.statLabel {
+    font-size: 0.8rem;
+    color: var(--gray-color);
+}
+
+/* 페이지네이션 */
+.pagination {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1.5rem;
+}
+
+.pageBtn {
+    padding: 0.5rem 1rem;
+    border: 1px solid #E0E0E0;
+    background-color: white;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: var(--transition);
+    font-weight: 500;
+}
+
+.pageBtn:hover:not(:disabled) {
+    background-color: var(--light-color);
+}
+
+.pageBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pageBtn.active {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+/* 사이드바 */
+.sidebarStats {
+    position: sticky;
+    top: 120px;
+}
+
+.wordInfoCard {
+    background-color: white;
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1.5rem;
+}
+
+.wordInfoCard h3 {
+    font-size: 1.1rem;
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+}
+
+.wordOfDay {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--primary-color);
+    text-align: center;
+    margin: 1rem 0;
+}
+
+.difficultyBadge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
+}
+
+.participationStats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.participationStats .statCard {
+    background: #f9f9f9;
+    padding: 1rem;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.participationStats .statCard .statValue {
+    font-size: 1.3rem;
+    color: var(--secondary-color);
+    font-weight: bold;
+}
+
+.avgAttempts {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--primary-color);
+    margin-top: 0.5rem;
+}
+
+.difficultyStatRow {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    padding: 0.5rem 0;
+}
+
+.difficultyStatRow:last-child {
+    margin-bottom: 0;
+}
+
+/* 반응형 */
+@media (max-width: 968px) {
+    .leaderboardMain {
+        grid-template-columns: 1fr;
+    }
+    
+    .sidebarStats {
+        position: static;
+    }
+    
+    .extendedLeaderboardItem {
+        grid-template-columns: 50px 1fr;
+        gap: 0.5rem;
+    }
+    
+    .extendedLeaderboardItem .statValue {
+        display: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .navLinks {
+        display: none;
+    }
+    
+    .filterTabs {
+        flex-wrap: wrap;
+    }
+    
+    .filterTab {
+        flex: 1;
+        min-width: 80px;
+        text-align: center;
+    }
+}

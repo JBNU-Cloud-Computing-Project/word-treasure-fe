@@ -1,0 +1,409 @@
+/* 전체 래퍼 */
+.wrapper {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #fff3e4 0%, #f8f1ff 45%, #e6f0ff 100%);
+    position: relative;
+}
+
+/* Confetti 효과 */
+.confetti {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1000;
+    overflow: hidden;
+}
+
+.confettiPiece {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    top: -10px;
+    animation: confettiFall 3s ease-out forwards;
+    opacity: 0.8;
+}
+
+@keyframes confettiFall {
+    to {
+        transform: translateY(100vh) rotate(720deg);
+        opacity: 0;
+    }
+}
+
+/* Header */
+.header {
+    background-color: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    padding: 1rem 0;
+}
+
+.nav .container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.logo {
+    font-size: 1.6rem;
+    font-weight: bold;
+    color: var(--primary-color);
+    text-decoration: none;
+    letter-spacing: -0.03em;
+}
+
+/* Container */
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.resultContainer {
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 0;
+}
+
+.resultCard {
+    background: white;
+    border-radius: 28px;
+    padding: 3rem;
+    max-width: 600px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    animation: scaleIn 0.5s ease-out;
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* 결과 아이콘 */
+.resultIcon {
+    font-size: 5rem;
+    margin-bottom: 1rem;
+    animation: bounce 1s ease-out;
+}
+
+.resultIcon.success {
+    color: var(--success-color);
+}
+
+.resultIcon.fail {
+    color: var(--muted-color);
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0);
+    }
+    40% {
+        transform: translateY(-20px);
+    }
+    60% {
+        transform: translateY(-10px);
+    }
+}
+
+/* 타이틀 */
+.resultTitle {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.resultTitle.success {
+    color: var(--success-color);
+}
+
+.resultTitle.fail {
+    color: var(--muted-color);
+}
+
+.resultSubtitle {
+    font-size: 1.2rem;
+    color: var(--gray-color);
+    margin-bottom: 2rem;
+}
+
+/* 정답 공개 */
+.answerReveal {
+    background-color: var(--light-color);
+    border-radius: 20px;
+    padding: 2rem;
+    margin: 2rem 0;
+}
+
+.answerLabel {
+    font-size: 1rem;
+    color: var(--gray-color);
+    margin-bottom: 0.5rem;
+}
+
+.answerWord {
+    font-size: 2.2rem;
+    font-weight: bold;
+    color: var(--primary-color);
+    margin: 1rem 0;
+}
+
+.answerDescription {
+    color: var(--gray-color);
+    font-size: 0.95rem;
+    margin-top: 1rem;
+}
+
+/* 통계 */
+.resultStats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin: 2rem 0;
+}
+
+.resultStat {
+    background-color: white;
+    padding: 1.5rem;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: var(--transition);
+}
+
+.resultStat:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.resultStatValue {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+}
+
+.resultStatLabel {
+    color: var(--gray-color);
+    font-size: 0.9rem;
+}
+
+/* 시도별 유사도 그래프 */
+.attemptVisualization {
+    margin: 2rem 0;
+    padding: 1.5rem;
+    background-color: #f9f9f9;
+    border-radius: 16px;
+}
+
+.attemptVisualization h3 {
+    color: var(--primary-color);
+    margin-bottom: 1.5rem;
+}
+
+.attemptGraph {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-around;
+    height: 150px;
+    gap: 0.5rem;
+}
+
+.attemptBar {
+    flex: 1;
+    max-width: 50px;
+    background-color: var(--primary-color);
+    border-radius: 8px 8px 0 0;
+    transition: height 0.5s ease-out;
+    position: relative;
+    min-height: 10%;
+}
+
+.attemptBarLabel {
+    position: absolute;
+    bottom: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.8rem;
+    color: var(--gray-color);
+    white-space: nowrap;
+}
+
+/* 보상 섹션 */
+.rewardSection {
+    background: linear-gradient(135deg, #FFF3CD 0%, #FFE8A3 100%);
+    border: 2px solid #FFEAA7;
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin: 2rem 0;
+}
+
+.rewardLabel {
+    font-size: 1rem;
+    color: var(--dark-color);
+    margin-bottom: 0.5rem;
+}
+
+.rewardAmount {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #FF8C42;
+    margin: 0.5rem 0;
+}
+
+.rewardDetail {
+    font-size: 0.9rem;
+    color: var(--gray-color);
+    margin-top: 0.5rem;
+}
+
+/* 실패 동기부여 섹션 */
+.failMotivation {
+    background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
+    border-color: #90CAF9;
+}
+
+.tipsList {
+    list-style: none;
+    padding: 0;
+    margin-top: 1rem;
+    text-align: left;
+}
+
+.tipsList li {
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 8px;
+    color: var(--dark-color);
+}
+
+.tipsList li::before {
+    content: '💡 ';
+    margin-right: 0.5rem;
+}
+
+/* 액션 버튼 */
+.actionButtons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+.btnPrimary,
+.btnSecondary {
+    padding: 1rem 2rem;
+    border: none;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btnPrimary {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #423b89 100%);
+    color: white;
+    box-shadow: 0 8px 20px rgba(45, 42, 92, 0.3);
+}
+
+.btnPrimary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(45, 42, 92, 0.4);
+}
+
+.btnSecondary {
+    background-color: rgba(45, 42, 92, 0.1);
+    color: var(--dark-color);
+    border: 2px solid rgba(45, 42, 92, 0.2);
+}
+
+.btnSecondary:hover {
+    background-color: rgba(45, 42, 92, 0.15);
+    transform: translateY(-2px);
+}
+
+/* 공유 섹션 */
+.shareSection {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid #E0E0E0;
+}
+
+.shareLabel {
+    color: var(--gray-color);
+    margin-bottom: 1rem;
+}
+
+.copyBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.85rem 2rem;
+    background: linear-gradient(135deg, #ff8a47 0%, #ff6b4a 100%);
+    color: white;
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: var(--transition);
+    font-weight: 600;
+    font-size: 1rem;
+    box-shadow: 0 6px 16px rgba(255, 138, 71, 0.3);
+}
+
+.copyBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(255, 138, 71, 0.4);
+}
+
+.copyBtn.copied {
+    background: var(--success-color);
+}
+
+/* 반응형 */
+@media (max-width: 640px) {
+    .resultCard {
+        padding: 2rem 1.5rem;
+    }
+    
+    .resultTitle {
+        font-size: 2rem;
+    }
+    
+    .answerWord {
+        font-size: 1.8rem;
+    }
+    
+    .resultStats {
+        grid-template-columns: 1fr;
+    }
+    
+    .actionButtons {
+        flex-direction: column;
+    }
+    
+    .btnPrimary,
+    .btnSecondary {
+        width: 100%;
+    }
+    
+    .attemptGraph {
+        gap: 0.25rem;
+    }
+    
+    .attemptBar {
+        max-width: 30px;
+    }
+}
