@@ -45,12 +45,15 @@ const Main = () => {
         word: game.word,
         status: game.status,
         isSuccess: game.status === 'SUCCESS',
+        isFailed: game.status === 'FAIL',
         attemptCount: game.attemptCount,
         highestSimilarity: game.highestSimilarity
       }));
 
-      // 가장 최근 게임이 성공했는지 확인
-      const hasPlayedToday = recentGames.length > 0 && recentGames[0].isSuccess;
+      // 가장 최근 게임이 오늘 완료되었는지 확인 (성공 또는 실패)
+      const latestGame = recentGames.length > 0 ? recentGames[0] : null;
+      const isCompletedToday = latestGame && (latestGame.isSuccess || latestGame.isFailed);
+      const isFailedToday = latestGame && latestGame.isFailed;
 
       setDashboardData({
         totalGames: stats.totalGames,
@@ -58,7 +61,8 @@ const Main = () => {
         bestRank: stats.bestRank,
         currentStreak: stats.currentStreak,
         recentGames,
-        hasPlayedToday,
+        hasPlayedToday: isCompletedToday,
+        isFailedToday: isFailedToday,
         currentTokens: stats.currentTokens
       });
     } catch (error) {
@@ -96,6 +100,9 @@ const Main = () => {
       setTimeout(() => setIsStarting(false), 1000);
     }
   };
+
+  // 게임 시작 가능 여부 확인
+  const canStartGame = !dashboardData?.hasPlayedToday && !isStarting;
 
   if (loading) {
     return <div className={styles.loading}>로딩 중...</div>;
@@ -164,13 +171,15 @@ const Main = () => {
           )}
           {dashboardData?.hasPlayedToday && (
             <p className={styles.heroSubtitle}>
-              오늘 정답을 이미 맞추셨어요 🎉 내일 다시 만나요~!
+              {dashboardData.isFailedToday
+                ? '오늘 최대 시도 횟수에 도달하셨어요 😢 내일 다시 도전해보세요!'
+                : '오늘 정답을 이미 맞추셨어요 🎉 내일 다시 만나요~!'}
             </p>
           )}
           <button 
             onClick={handleStartGame}
             className={styles.btnPrimary}
-            disabled={isStarting || dashboardData?.hasPlayedToday}
+            disabled={!canStartGame}
           >
             {dashboardData?.hasPlayedToday
               ? '내일 만나요~!'
@@ -219,7 +228,7 @@ const Main = () => {
                     {new Date(game.gameDate).toLocaleDateString()}
                   </div>
                   <div className={styles.gameResult}>
-                    {game.isSuccess ? '✅ 성공' : '❌ 실패'}
+                    {game.isSuccess ? '✅ 성공' : game.isFailed ? '❌ 실패' : '⏳ 진행중'}
                   </div>
                   <div className={styles.gameDetails}>
                     단어: {game.word}

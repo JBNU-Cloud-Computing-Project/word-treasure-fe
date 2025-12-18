@@ -4,18 +4,16 @@ import { useAuth } from '../../contexts/AuthContext';
 import styles from './Result.module.css';
 
 /**
- * ResultSuccess 컴포넌트 - 게임 성공 결과 페이지
+ * ResultFail 컴포넌트 - 게임 실패 결과 페이지
  * 
  * 주요 기능:
- * 1. 축하 애니메이션 (confetti)
+ * 1. 실패 메시지 표시
  * 2. 정답 공개
- * 3. 게임 통계 (시도 횟수, 순위, 최고 유사도)
+ * 3. 게임 통계 (시도 횟수, 최고 유사도)
  * 4. 시도별 유사도 그래프
- * 5. 획득 토큰 표시
- * 6. 결과 공유 (클립보드 복사)
- * 7. 액션 버튼 (순위 보기, 내일 다시)
+ * 5. 액션 버튼 (순위 보기, 내일 다시)
  */
-const ResultSuccess = () => {
+const ResultFail = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
@@ -23,25 +21,15 @@ const ResultSuccess = () => {
   // location.state에서 전달받은 데이터
   const resultData = location.state || {};
   
-  const [showConfetti, setShowConfetti] = useState(true);
   const [copySuccess, setCopySuccess] = useState(false);
-
-  useEffect(() => {
-    // Confetti 3초 후 자동 숨김
-    const timer = setTimeout(() => {
-      setShowConfetti(false);
-    }, 3000);
-
-    return () => clearTimeout(timer);
-  }, []);
 
   // 결과 복사
   const handleCopyResult = async () => {
     const resultText = `WordTreasure 🎮
 오늘의 단어: ${resultData.answer || '단어'}
-시도: ${resultData.attempts || 0}번 | 순위: #${resultData.rank || '-'} | 최고 유사도: ${resultData.maxSimilarity || 0}%
+시도: ${resultData.attempts || 0}/${resultData.maxAttempts || 10}번 | 최고 유사도: ${resultData.maxSimilarity || 0}%
 
-당신도 도전해보세요!`;
+내일 다시 도전해보세요!`;
 
     try {
       await navigator.clipboard.writeText(resultText);
@@ -52,34 +40,8 @@ const ResultSuccess = () => {
     }
   };
 
-  // 토큰 보상 계산 (순위 기반)
-  const getTokenReward = () => {
-    const rank = resultData.rank || 999;
-    if (rank <= 3) return 50;
-    if (rank <= 10) return 40;
-    if (rank <= 30) return 30;
-    return 20;
-  };
-
   return (
     <div className={styles.wrapper}>
-      {/* Confetti 효과 */}
-      {showConfetti && (
-        <div className={styles.confetti}>
-          {[...Array(50)].map((_, i) => (
-            <div
-              key={i}
-              className={styles.confettiPiece}
-              style={{
-                left: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 3}s`,
-                backgroundColor: ['#ff6b4a', '#ff8a47', '#4AD98F', '#3EC7C2', '#FFD700'][Math.floor(Math.random() * 5)]
-              }}
-            />
-          ))}
-        </div>
-      )}
-
       {/* Header */}
       <header className={styles.header}>
         <nav className={styles.nav}>
@@ -95,22 +57,22 @@ const ResultSuccess = () => {
       <div className={styles.container}>
         <div className={styles.resultContainer}>
           <div className={styles.resultCard}>
-            {/* 성공 아이콘 */}
-            <div className={`${styles.resultIcon} ${styles.success}`}>🎉</div>
+            {/* 실패 아이콘 */}
+            <div className={`${styles.resultIcon} ${styles.fail}`}>😢</div>
             
             {/* 타이틀 */}
-            <h1 className={`${styles.resultTitle} ${styles.success}`}>
-              축하합니다!
+            <h1 className={`${styles.resultTitle} ${styles.fail}`}>
+              아쉽네요!
             </h1>
             <p className={styles.resultSubtitle}>
-              오늘의 단어를 맞췄습니다!
+              최대 시도 횟수를 모두 사용하셨습니다.
             </p>
 
             {/* 정답 공개 */}
             <div className={styles.answerReveal}>
               <p className={styles.answerLabel}>정답은</p>
               <div className={styles.answerWord}>
-                {resultData.answer || '라이어 게임'}
+                {resultData.answer || '정답을 확인할 수 없습니다'}
               </div>
               {resultData.description && (
                 <p className={styles.answerDescription}>
@@ -123,19 +85,13 @@ const ResultSuccess = () => {
             <div className={styles.resultStats}>
               <div className={styles.resultStat}>
                 <div className={styles.resultStatValue}>
-                  {resultData.attempts || 7}번
+                  {resultData.attempts || 0}/{resultData.maxAttempts || 10}번
                 </div>
                 <div className={styles.resultStatLabel}>시도 횟수</div>
               </div>
               <div className={styles.resultStat}>
                 <div className={styles.resultStatValue}>
-                  #{resultData.rank || 24}
-                </div>
-                <div className={styles.resultStatLabel}>현재 순위</div>
-              </div>
-              <div className={styles.resultStat}>
-                <div className={styles.resultStatValue}>
-                  {resultData.maxSimilarity || 94}%
+                  {resultData.maxSimilarity || 0}%
                 </div>
                 <div className={styles.resultStatLabel}>최고 유사도</div>
               </div>
@@ -152,9 +108,7 @@ const ResultSuccess = () => {
                       className={styles.attemptBar}
                       style={{
                         height: `${attempt.similarity}%`,
-                        backgroundColor: index === resultData.attemptHistory.length - 1
-                          ? 'var(--success-color)'
-                          : 'var(--primary-color)'
+                        backgroundColor: 'var(--primary-color)'
                       }}
                     >
                       <span className={styles.attemptBarLabel}>
@@ -166,16 +120,11 @@ const ResultSuccess = () => {
               </div>
             )}
 
-            {/* 보상 섹션 */}
+            {/* 격려 메시지 */}
             <div className={styles.rewardSection}>
-              <p className={styles.rewardLabel}>🎁 획득한 보상</p>
-              <div className={styles.rewardAmount}>
-                +{resultData.tokensEarned || getTokenReward()} 토큰
-              </div>
+              <p className={styles.rewardLabel}>💪 다음 기회를 노려보세요!</p>
               <p className={styles.rewardDetail}>
-                {resultData.rank <= 3 && '🏆 TOP 3 보너스!'}
-                {resultData.rank > 3 && resultData.rank <= 10 && '🥈 TOP 10 보너스!'}
-                {resultData.rank > 10 && '정답 보너스'}
+                내일 다시 도전하면 더 좋은 결과를 얻을 수 있을 거예요!
               </p>
             </div>
 
@@ -215,4 +164,4 @@ const ResultSuccess = () => {
   );
 };
 
-export default ResultSuccess;
+export default ResultFail;

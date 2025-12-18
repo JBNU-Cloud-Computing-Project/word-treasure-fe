@@ -34,6 +34,7 @@ const Game = () => {
   const [loading, setLoading] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [hintLoading, setHintLoading] = useState(false);
+  const [maxAttempts, setMaxAttempts] = useState(10); // 기본 최대 시도 횟수
 
   useEffect(() => {
     //이미 초기화 중이면 무시
@@ -61,6 +62,11 @@ const Game = () => {
       if (current?.hasStarted && current?.gameSessionId) {
         // 진행 중인 게임 세션이 있는 경우: 서버에서 내려준 진행 상태(progress)로 복원
         setGameData(current);
+        
+        // 최대 시도 횟수 설정 (API 응답의 maxAttempts 사용)
+        if (current.maxAttempts != null) {
+          setMaxAttempts(current.maxAttempts);
+        }
 
         const progress = current.progress;
 
@@ -116,7 +122,13 @@ const Game = () => {
         const startRes = await api.post('/api/game/start', {
           dailyWordId: current.dailyWordId
         });
-        setGameData(startRes.data.data);
+        const gameData = startRes.data.data;
+        setGameData(gameData);
+        
+        // 최대 시도 횟수 설정 (API 응답의 maxAttempts 사용)
+        if (gameData.maxAttempts != null) {
+          setMaxAttempts(gameData.maxAttempts);
+        }
       }
     } catch (error) {
       console.error('게임 초기화 실패:', error);
@@ -222,7 +234,8 @@ const Game = () => {
       };
 
       // 새로운 시도를 맨 앞에 추가 (타임라인 형식)
-      setAttempts(prev => [normalizedResult, ...prev]);
+      const newAttempts = [normalizedResult, ...attempts];
+      setAttempts(newAttempts);
       
       // 입력창 초기화
       setUserInput('');
@@ -235,14 +248,44 @@ const Game = () => {
       // 정답이면 성공 페이지로
       if (result.isCorrect) {
         setTimeout(() => {
-          console.log(attempts);
           navigate('/result/success', { 
             state: { 
-              answer: attempts.userInput,
-              attemptHistory: attempts,
-              attempts: attempts.length + 1,
+              answer: normalizedResult.userInput || result.userInput,
+              attemptHistory: newAttempts,
+              attempts: newAttempts.length,
               rank: result.rank,
-              tokens: result.tokensEarned 
+              tokens: result.tokensEarned,
+              maxSimilarity: Math.max(...newAttempts.map(a => a.similarity || 0))
+            }
+          });
+        }, 1500);
+        return;
+      }
+      
+      // 최대 시도 횟수를 넘어가면 실패 페이지로
+      if (newAttempts.length >= maxAttempts) {
+        setTimeout(async () => {
+          // 정답 정보 가져오기
+          let answer = result.answer || gameData?.answer || gameData?.dailyWord?.word || '정답을 확인할 수 없습니다';
+          
+          // 정답 정보가 없으면 API에서 가져오기 시도
+          if (!answer || answer === '정답을 확인할 수 없습니다') {
+            try {
+              const answerRes = await api.get('/api/game/current');
+              const currentData = answerRes.data.data;
+              answer = currentData?.dailyWord?.word || currentData?.answer || answer;
+            } catch (error) {
+              console.error('정답 정보 가져오기 실패:', error);
+            }
+          }
+          
+          navigate('/result/fail', { 
+            state: { 
+              answer: answer,
+              attemptHistory: newAttempts,
+              attempts: newAttempts.length,
+              maxAttempts: maxAttempts,
+              maxSimilarity: Math.max(...newAttempts.map(a => a.similarity || 0))
             }
           });
         }, 1500);
@@ -455,17 +498,17 @@ const Game = () => {
               type="text"
               value={userInput}
               onChange={(e) => setUserInput(e.target.value)}
-              placeholder="단어나 문장을 입력하세요..."
+              placeholder={attempts.length >= maxAttempts ? "최대 시도 횟수를 모두 사용하셨습니다." : "단어나 문장을 입력하세요..."}
               className={styles.gameInput}
-              disabled={loading}
+              disabled={loading || attempts.length >= maxAttempts}
               autoFocus
             />
             <button 
               type="submit" 
               className={styles.submitBtn}
-              disabled={loading || !userInput.trim()}
+              disabled={loading || !userInput.trim() || attempts.length >= maxAttempts}
             >
-              {loading ? '분석 중...' : '제출 🚀'}
+              {loading ? '분석 중...' : attempts.length >= maxAttempts ? '시도 횟수 초과' : '제출 🚀'}
             </button>
           </form>
         </div>
