@@ -140,13 +140,13 @@ const ResultSuccess = () => {
               <div className={styles.attemptVisualization}>
                 <h3>시도별 유사도 변화</h3>
                 <div className={styles.attemptGraph}>
-                  {resultData.attemptHistory.map((attempt, index) => (
+                  {[...resultData.attemptHistory].reverse().map((attempt, index) => (
                     <div
                       key={index}
                       className={styles.attemptBar}
                       style={{
                         height: `${attempt.similarity}%`,
-                        backgroundColor: index === resultData.attemptHistory.length - 1
+                        backgroundColor: index === 0
                           ? 'var(--success-color)'
                           : 'var(--primary-color)'
                       }}
