@@ -25,9 +25,22 @@ const api = axios.create({
  */
 api.interceptors.request.use(
   (config) => {
+    // 쿠키 확인 (모든 환경에서)
+    const cookies = document.cookie;
+    if (cookies) {
+      console.log('[Request Cookies]', config.url, cookies);
+    } else {
+      console.log('[No Cookies]', config.url, '쿠키가 없습니다.');
+    }
+    
     // 개발 환경에서 요청 로깅
     if (import.meta.env.DEV) {
       console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`);
+      console.log('[Request Config]', {
+        baseURL: config.baseURL,
+        withCredentials: config.withCredentials,
+        headers: config.headers
+      });
     }
     return config;
   },
@@ -42,9 +55,18 @@ api.interceptors.request.use(
  */
 api.interceptors.response.use(
   (response) => {
+    // 쿠키 디버깅 (모든 환경에서)
+    const setCookieHeader = response.headers['set-cookie'];
+    if (setCookieHeader) {
+      console.log('[Cookie Set]', response.config.url, setCookieHeader);
+    } else {
+      console.log('[No Cookie]', response.config.url, 'Set-Cookie 헤더가 없습니다.');
+    }
+    
     // 개발 환경에서 응답 로깅
     if (import.meta.env.DEV) {
       console.log(`[API Response] ${response.config.url}`, response.data);
+      console.log('[Response Headers]', response.headers);
     }
     return response;
   },

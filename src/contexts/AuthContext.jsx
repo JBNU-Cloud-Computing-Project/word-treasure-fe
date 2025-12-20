@@ -31,18 +31,27 @@ export const AuthProvider = ({ children }) => {
       return;
     }
     
+    // user가 이미 있으면 재확인 스킵 (로그인 직후)
+    if (user) {
+      setLoading(false);
+      return;
+    }
+    
     checkingRef.current = true;
     try {
+      console.log('[Auth Check] 인증 상태 확인 중...');
       const response = await api.get('/api/auth/me');
+      console.log('[Auth Check] 인증 성공:', response.data.data);
       setUser(response.data.data);
     } catch (error) {
       // 로그인되어 있지 않으면 user는 null 유지
+      console.log('[Auth Check] 인증 실패:', error.response?.status, error.message);
       setUser(null);
     } finally {
       setLoading(false);
       checkingRef.current = false;
     }
-  }, []);
+  }, [user]);
 
   // 앱 시작 시 로그인 상태 확인
   useEffect(() => {
@@ -54,32 +63,43 @@ export const AuthProvider = ({ children }) => {
    */
   const login = useCallback(async (email, password) => {
     try {
+      console.log('[Login] 로그인 시도:', email);
       const response = await api.post('/api/auth/login', {
         email,
         password
       });
       
+      console.log('[Login] 로그인 응답:', response.data);
+      console.log('[Login] 응답 헤더:', response.headers);
+      
       // 로그인 성공 시 사용자 정보 저장
-      // 응답에 사용자 정보가 있으면 바로 설정, 없으면 인증 상태 재확인
+      // 응답에 사용자 정보가 있으면 바로 설정
       if (response.data?.data) {
+        console.log('[Login] 사용자 정보 설정:', response.data.data);
         setUser(response.data.data);
+        setLoading(false); // 로딩 상태 해제
       } else {
         // 사용자 정보가 없으면 인증 상태 재확인
-        // 약간의 지연을 두어 쿠키가 브라우저에 저장될 시간을 줌
+        // 쿠키가 설정될 시간을 주기 위해 지연
+        console.log('[Login] 사용자 정보가 없어 재확인 시도...');
         setTimeout(async () => {
           try {
             const authResponse = await api.get('/api/auth/me');
+            console.log('[Login] 재확인 성공:', authResponse.data.data);
             setUser(authResponse.data.data);
+            setLoading(false);
           } catch (err) {
+            console.error('[Login] 재확인 실패:', err);
             // 재확인 실패해도 로그인은 성공한 것으로 간주
             // 쿠키는 이미 설정되었으므로 다음 요청에서 작동할 것
-            console.warn('인증 상태 재확인 실패:', err);
+            setLoading(false);
           }
-        }, 100);
+        }, 300);
       }
       
       return { success: true };
     } catch (error) {
+      console.error('[Login] 로그인 실패:', error);
       return {
         success: false,
         message: error.response?.data?.message || '로그인에 실패했습니다.'
