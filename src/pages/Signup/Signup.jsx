@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import api from '../../api/axios';
 import styles from './Signup.module.css';
 
 /**
@@ -123,12 +124,10 @@ const Signup = () => {
   // 닉네임 중복 확인 (/api/auth/check/nickname?nickName=...)
   const checkNicknameDuplicate = async (nickname) => {
     try {
-      const res = await fetch(
-        `http://localhost:8080/api/auth/check/nickname?nickName=${encodeURIComponent(nickname)}`,
-        { credentials: 'include' }
-      );
-      const body = await res.json();
-      const data = body.data;
+      const response = await api.get('/api/auth/check/nickname', {
+        params: { nickName: nickname }
+      });
+      const data = response.data.data;
 
       setDuplicateStatus(prev => ({
         ...prev,
@@ -142,12 +141,10 @@ const Signup = () => {
   // 이메일 중복 확인 (/api/auth/check/email?email=...)
   const checkEmailDuplicate = async (email) => {
     try {
-      const res = await fetch(
-        `http://localhost:8080/api/auth/check/email?email=${encodeURIComponent(email)}`,
-        { credentials: 'include' }
-      );
-      const body = await res.json();
-      const data = body.data;
+      const response = await api.get('/api/auth/check/email', {
+        params: { email: email }
+      });
+      const data = response.data.data;
 
       setDuplicateStatus(prev => ({
         ...prev,
