@@ -106,8 +106,11 @@ const Login = () => {
           localStorage.removeItem('rememberedEmail');
         }
         
-        // 로그인 성공 - 메인 페이지로 이동
-        navigate('/main', { replace: true });
+        // 로그인 성공 - 약간의 지연 후 메인 페이지로 이동
+        // 쿠키가 브라우저에 저장되고 인증 상태가 업데이트될 시간을 줌
+        setTimeout(() => {
+          navigate('/main', { replace: true });
+        }, 200);
       } else {
         // 로그인 실패 - 에러 메시지 표시
         setError(result.message || '로그인에 실패했습니다.');

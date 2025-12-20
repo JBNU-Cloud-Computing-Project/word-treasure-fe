@@ -60,7 +60,24 @@ export const AuthProvider = ({ children }) => {
       });
       
       // 로그인 성공 시 사용자 정보 저장
-      setUser(response.data.data);
+      // 응답에 사용자 정보가 있으면 바로 설정, 없으면 인증 상태 재확인
+      if (response.data?.data) {
+        setUser(response.data.data);
+      } else {
+        // 사용자 정보가 없으면 인증 상태 재확인
+        // 약간의 지연을 두어 쿠키가 브라우저에 저장될 시간을 줌
+        setTimeout(async () => {
+          try {
+            const authResponse = await api.get('/api/auth/me');
+            setUser(authResponse.data.data);
+          } catch (err) {
+            // 재확인 실패해도 로그인은 성공한 것으로 간주
+            // 쿠키는 이미 설정되었으므로 다음 요청에서 작동할 것
+            console.warn('인증 상태 재확인 실패:', err);
+          }
+        }, 100);
+      }
+      
       return { success: true };
     } catch (error) {
       return {

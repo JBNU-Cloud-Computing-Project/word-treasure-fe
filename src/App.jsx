@@ -12,7 +12,7 @@ import Profile from './pages/Profile/Profile';
 import ResultSuccess from './pages/Result/ResultSuccess';
 import ResultFail from './pages/Result/ResultFail';
 
-import './App.module.css';
+import './App.css';
 
 /**
  * App 컴포넌트 - 전체 라우팅 및 앱 구조
