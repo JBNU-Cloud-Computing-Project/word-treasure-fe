@@ -516,7 +516,12 @@ const Game = () => {
               className={styles.submitBtn}
               disabled={loading || !userInput.trim() || attempts.length >= maxAttempts}
             >
-              {loading ? '분석 중...' : attempts.length >= maxAttempts ? '시도 횟수 초과' : '제출 🚀'}
+              {loading ? (
+                <>
+                  <span className={styles.spinner}></span>
+                  <span>분석 중...</span>
+                </>
+              ) : attempts.length >= maxAttempts ? '시도 횟수 초과' : '제출 🚀'}
             </button>
           </form>
         </div>
@@ -530,6 +535,16 @@ const Game = () => {
         >
           ↑
         </button>
+      )}
+
+      {/* 로딩 오버레이 */}
+      {loading && (
+        <div className={styles.loadingOverlay}>
+          <div className={styles.loadingContent}>
+            <div className={styles.loadingSpinner}></div>
+            <p className={styles.loadingText}>단어를 분석하고 있습니다...</p>
+          </div>
+        </div>
       )}
     </div>
   );
