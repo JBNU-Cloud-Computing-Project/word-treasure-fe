@@ -224,7 +224,7 @@ const Game = () => {
       const response = await api.post('/api/game/attempt', {
         gameSessionId: gameData?.gameSessionId,
         userInput: userInput.trim()
-      });
+      }, { timeout: 60000 });
 
       const result = response.data.data;
       // API 스펙: similarityScore가 이미 0~100(%) 값으로 전달되므로 그대로 사용

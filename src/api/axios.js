@@ -11,7 +11,7 @@ import axios from 'axios';
  * 3. timeout: 요청 타임아웃 설정 (10초)
  */
 const api = axios.create({
-  baseURL: 'http://localhost:8080',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080',
   withCredentials: true, // 쿠키를 포함한 요청 허용 (세션 인증 필수!)
   timeout: 10000,
   headers: {
