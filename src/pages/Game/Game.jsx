@@ -84,6 +84,8 @@ const Game = () => {
                 ),
                 // extraHints는 나중에 progress.hints로 채울 것
                 extraHints: [],
+                // 힌트 요청 여부 추적 (복원된 힌트가 있으면 이미 요청한 것으로 간주)
+                hintRequested: false,
                 // createdAt을 간단한 표시용 문자열로 변환 (없으면 '방금 전')
                 timestamp: attempt.createdAt || '방금 전',
               }));
@@ -110,6 +112,7 @@ const Game = () => {
                 ...(restoredAttempts[0].extraHints || []),
                 ...extraHintTexts,
               ],
+              hintRequested: extraHintTexts.length > 0, // 복원된 힌트가 있으면 이미 요청한 것으로 표시
             };
           }
 
@@ -145,6 +148,9 @@ const Game = () => {
   // 추가 힌트 요청
   const handleRequestHint = async () => {
     if (!gameData?.gameSessionId || hintLoading) return;
+    
+    // 최신 시도가 없거나 이미 힌트를 받았는지 확인
+    if (!attempts.length || attempts[0].hintRequested) return;
 
     setHintLoading(true);
     try {
@@ -154,7 +160,7 @@ const Game = () => {
 
       const { hintText, remainingTokens, tokensSpent } = response.data.data;
 
-      // 가장 최신 시도(attempts[0])에 extraHints를 추가
+      // 가장 최신 시도(attempts[0])에 extraHints를 추가하고 hintRequested 플래그 설정
       setAttempts(prev => {
         if (!prev.length) return prev;
 
@@ -162,6 +168,7 @@ const Game = () => {
         const updatedLatest = {
           ...latest,
           extraHints: [...(latest.extraHints || []), hintText],
+          hintRequested: true, // 힌트 요청 완료 플래그
         };
 
         return [updatedLatest, ...rest];
@@ -230,7 +237,8 @@ const Game = () => {
       // API 스펙: similarityScore가 이미 0~100(%) 값으로 전달되므로 그대로 사용
       const normalizedResult = {
         ...result,
-        similarity: Math.round(result.similarityScore ?? result.similarity ?? 0)
+        similarity: Math.round(result.similarityScore ?? result.similarity ?? 0),
+        hintRequested: false, // 새로운 시도는 힌트를 아직 받지 않은 상태
       };
 
       // 새로운 시도를 맨 앞에 추가 (타임라인 형식)
@@ -338,7 +346,7 @@ const Game = () => {
             <h1 className={styles.gameTitle}>오늘의 단어 맞추기</h1>
             <div className={styles.attemptCounter}>
               <span>시도 횟수:</span>
-              <strong>{attempts.length}회</strong>
+              <strong>{attempts.length}회 / {maxAttempts}회</strong>
             </div>
           </div>
         </div>
@@ -417,12 +425,12 @@ const Game = () => {
                         ))}
 
                         {/* 가장 최신 시도에만 추가 힌트 버튼 노출 */}
-                        {index === 0 && (
+                        {index === 0 && !attempt.hintRequested && (
                           <button
                             type="button"
                             className={styles.extraHintButton}
                             onClick={handleRequestHint}
-                            disabled={hintLoading}
+                            disabled={hintLoading || attempt.hintRequested}
                           >
                             {hintLoading ? '힌트 불러오는 중...' : '추가 힌트 받기 (5 토큰 소모)'}
                           </button>
