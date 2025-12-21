@@ -18,12 +18,14 @@ const Main = () => {
   const { user, logout } = useAuth();
   
   const [dashboardData, setDashboardData] = useState(null);
+  const [currentGameData, setCurrentGameData] = useState(null);
   const [tokenPoolData, setTokenPoolData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isStarting, setIsStarting] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
+    fetchCurrentGameData();
     fetchTokenPoolData();
   }, []);
 
@@ -63,12 +65,28 @@ const Main = () => {
         recentGames,
         hasPlayedToday: isCompletedToday,
         isFailedToday: isFailedToday,
+        recentGames,
         currentTokens: stats.currentTokens
       });
     } catch (error) {
       console.error('대시보드 데이터 로드 실패:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCurrentGameData = async () => {
+    try {
+      const res = await api.get('/api/game/current');
+      const gameInfo = res.data.data;
+      
+      setCurrentGameData({
+        hasSession: gameInfo.sessionId != null, // 오늘 게임 세션 존재 여부
+        status: gameInfo.status, // PLAYING, SUCCESS, FAIL
+        isCompleted: gameInfo.status === 'SUCCESS' || gameInfo.status === 'FAIL'
+      });
+    } catch (error) {
+      console.error('현재 게임 데이터 로드 실패:', error);
     }
   };
 
@@ -102,7 +120,7 @@ const Main = () => {
   };
 
   // 게임 시작 가능 여부 확인
-  const canStartGame = !dashboardData?.hasPlayedToday && !isStarting;
+  const canStartGame = !currentGameData?.isCompleted && !isStarting;
 
   if (loading) {
     return <div className={styles.loading}>로딩 중...</div>;
@@ -169,9 +187,9 @@ const Main = () => {
               </p>
             </div>
           )}
-          {dashboardData?.hasPlayedToday && (
+          {currentGameData?.isCompleted && (
             <p className={styles.heroSubtitle}>
-              {dashboardData.isFailedToday
+              {currentGameData.status === 'FAIL'
                 ? '오늘 최대 시도 횟수에 도달하셨어요 😢 내일 다시 도전해보세요!'
                 : '오늘 정답을 이미 맞추셨어요 🎉 내일 다시 만나요~!'}
             </p>
