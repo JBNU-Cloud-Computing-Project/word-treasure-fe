@@ -216,9 +216,9 @@ if (loading || !currentGameData) {
           <button 
             onClick={handleStartGame}
             className={styles.btnPrimary}
-            disabled={!canStartGame()}
+            disabled={!canStartGame()} // 함수 호출로 변경
           >
-            {dashboardData?.hasPlayedToday
+            {canStartGame()
               ? '내일 만나요~!'
               : (isStarting ? '게임 준비 중...' : '게임 시작하기')}
           </button>
