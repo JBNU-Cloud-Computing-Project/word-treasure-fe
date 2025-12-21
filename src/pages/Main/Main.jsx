@@ -122,7 +122,7 @@ const Main = () => {
 
   // 게임 시작 핸들러
   const handleStartGame = async () => {
-    if (isStarting || dashboardData?.hasPlayedToday) return;
+    if (isStarting || currentGameData?.isCompleted) return;
     
     setIsStarting(true);
     try {
@@ -216,9 +216,9 @@ if (loading || !currentGameData) {
           <button 
             onClick={handleStartGame}
             className={styles.btnPrimary}
-            disabled={!canStartGame()} // 함수 호출로 변경
+            disabled={!canStartGame()}
           >
-            {canStartGame()
+            {currentGameData.isCompleted
               ? '내일 만나요~!'
               : (isStarting ? '게임 준비 중...' : '게임 시작하기')}
           </button>
