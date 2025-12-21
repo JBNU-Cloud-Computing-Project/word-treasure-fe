@@ -79,16 +79,30 @@ const Main = () => {
     try {
       const res = await api.get('/api/game/current');
       const gameInfo = res.data.data;
+
+      const isGameCompleted = gameInfo.status === 'SUCCESS' || gameInfo.status === 'FAIL';
       
       setCurrentGameData({
-        hasSession: gameInfo.sessionId != null, // 오늘 게임 세션 존재 여부
-        status: gameInfo.status, // PLAYING, SUCCESS, FAIL
-        isCompleted: gameInfo.status === 'SUCCESS' || gameInfo.status === 'FAIL'
+        hasSession: gameInfo.sessionId != null,
+        status: gameInfo.status,
+        isCompleted: isGameCompleted
       });
+
+      console.log('현재 게임 상태:', {
+        status: gameInfo.status,
+        sessionId: gameInfo.sessionId,
+        isCompleted: isGameCompleted
+      }); // 디버깅용
     } catch (error) {
       console.error('현재 게임 데이터 로드 실패:', error);
+      setCurrentGameData({
+        hasSession: false,
+        status: null,
+        isCompleted: false
+      });
     }
   };
+
 
   // 토큰 풀 데이터 가져오기
   const fetchTokenPoolData = async () => {
@@ -119,12 +133,17 @@ const Main = () => {
     }
   };
 
-  // 게임 시작 가능 여부 확인
-  const canStartGame = !currentGameData?.isCompleted && !isStarting;
+ // 게임 시작 가능 여부 - 더 명확하게 체크
+ const canStartGame = () => {
+  if (isStarting) return false;
+  if (!currentGameData) return false; // 아직 로딩 중
+  return !currentGameData.isCompleted; // 완료되지 않았으면 시작 가능
+};
 
-  if (loading) {
-    return <div className={styles.loading}>로딩 중...</div>;
-  }
+// loading 체크 수정
+if (loading || !currentGameData) {
+  return <div className={styles.loading}>로딩 중...</div>;
+}
 
   return (
     <div>
@@ -197,7 +216,7 @@ const Main = () => {
           <button 
             onClick={handleStartGame}
             className={styles.btnPrimary}
-            disabled={!canStartGame}
+            disabled={!canStartGame()}
           >
             {dashboardData?.hasPlayedToday
               ? '내일 만나요~!'
